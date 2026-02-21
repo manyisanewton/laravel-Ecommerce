@@ -1,0 +1,92 @@
+openapi: 3.0.3
+info:
+  title: Symatech Ecommerce API
+  version: 1.0.0
+  description: API-driven ecommerce backend with JWT auth, RBAC, reports, and payment hooks.
+servers:
+  - url: http://localhost:8000/api
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+paths:
+  /auth/register:
+    post:
+      summary: Register normal user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password, password_confirmation]
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+                password: { type: string }
+                password_confirmation: { type: string }
+      responses:
+        '201':
+          description: Registered
+  /auth/login:
+    post:
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authenticated
+  /products:
+    get:
+      summary: List active products
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Products page }
+  /checkout:
+    post:
+      summary: Place an order and initiate payment
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Order created }
+  /admin/users:
+    get:
+      summary: Admin list users
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Users list }
+  /admin/reports/export/{type}:
+    get:
+      summary: Export report (excel/pdf)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: type
+          required: true
+          schema: { type: string, enum: [users, orders, activity] }
+        - in: query
+          name: from
+          required: true
+          schema: { type: string, format: date }
+        - in: query
+          name: to
+          required: true
+          schema: { type: string, format: date }
+        - in: query
+          name: format
+          required: true
+          schema: { type: string, enum: [excel, pdf] }
+      responses:
+        '200': { description: File download }
